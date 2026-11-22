@@ -287,7 +287,12 @@ body:not(.authed) .wrap,body:not(.authed) .fx,body:not(.authed) #snow{display:no
 @media (prefers-reduced-motion:no-preference){.lwin.pop{animation:swin .6s ease}}
 .lhist{font-size:.88rem}
 .menu .lhist li{display:block;padding:8px 12px}
-.lalert{position:fixed;z-index:30;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));background:var(--accent);color:#fff;text-decoration:none;font-size:.88rem;border-radius:999px;padding:8px 16px;box-shadow:0 4px 16px rgba(0,0,0,.2);white-space:nowrap}
+.alerts{position:fixed;z-index:30;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;align-items:center;gap:6px;width:max-content;max-width:calc(100vw - 24px)}
+.salert{display:flex;align-items:center;gap:8px;background:var(--sea)!important;padding:6px 8px 6px 16px!important}
+.salert[hidden]{display:none}
+.salert a{color:#fff;text-decoration:none}
+.salert button{font:inherit;font-size:.8rem;color:#fff;background:rgba(255,255,255,.2);border:0;border-radius:999px;width:26px;height:26px;cursor:pointer}
+.lalert{background:var(--accent);color:#fff;text-decoration:none;font-size:.88rem;border-radius:999px;padding:8px 16px;box-shadow:0 4px 16px rgba(0,0,0,.2);white-space:nowrap}
 .lalert[hidden]{display:none}
 .lalert span{font-family:var(--font-mono)}
 
@@ -353,7 +358,10 @@ body:not(.authed) .wrap,body:not(.authed) .fx,body:not(.authed) #snow{display:no
   </form>
 </div>
 
-<a id="luckyAlert" class="lalert" href="#lucky" hidden><b>행운권 추첨 진행 중!</b> <span id="luckyAlertT"></span> · 눌러서 참여</a>
+<div class="alerts" aria-live="polite">
+  <a id="luckyAlert" class="lalert" href="#lucky" hidden><b>행운권 추첨 진행 중!</b> <span id="luckyAlertT"></span> · 눌러서 참여</a>
+  <div id="scratchAlert" class="lalert salert" hidden><a href="#scratch" id="scratchAlertLink"><b id="scratchAlertB"></b> <span id="scratchAlertT"></span></a><button type="button" id="scratchAlertX" aria-label="알림 닫기">✕</button></div>
+</div>
 <div class="wrap">
   <div class="userbar"><span><b id="meName"></b>님 환영합니다 · <span id="meRoom"></span></span><button type="button" id="logoutBtn">로그아웃</button></div>
   <header>
@@ -382,7 +390,7 @@ body:not(.authed) .wrap,body:not(.authed) .fx,body:not(.authed) #snow{display:no
     <nav class="daynav" data-for="rec" aria-label="레크레이션" hidden>
       <a href="#lucky">행운권 추첨</a>
       <a href="#ladder">사다리타기</a>
-      <a href="#bingo" class="gated" data-open="2026-12-04T15:00:00+09:00" hidden>사진 콘테스트</a>
+      <a href="#bingo">사진 콘테스트</a>
       <a href="#scratch" class="gated" data-open="2026-12-04T17:30:00+09:00" hidden>즉석 복권</a>
     </nav>
     <nav class="daynav" data-for="info" aria-label="여행준비와 정보" hidden>
@@ -488,7 +496,7 @@ body:not(.authed) .wrap,body:not(.authed) .fx,body:not(.authed) #snow{display:no
     <ol class="ldres" id="ldRes"></ol>
   </section>
 
-  <section id="bingo" class="gated" data-open="2026-12-04T15:00:00+09:00" hidden>
+  <section id="bingo">
     <h2>사진 콘테스트 <small class="h2sub">미션 빙고</small></h2>
     <p class="note">일정 중에 미션 사진을 찍고 카카오톡 단체방에 올린 뒤, 해당 칸을 눌러 표시하세요. 가로·세로·대각선으로 줄을 완성하면 빙고입니다. 표시하면 아래 실시간 순위에 바로 반영됩니다.</p>
     <div class="bstatus" aria-live="polite"><span><b id="bDone">0</b>/9 미션</span><span><b id="bLines">0</b>줄 빙고</span></div>
@@ -589,7 +597,7 @@ body:not(.authed) .wrap,body:not(.authed) .fx,body:not(.authed) #snow{display:no
 
 <script>
 (function(){
-  // 사진 미션 빙고는 12월 4일(금) 15:00, 복권은 17:30(한국 시간)부터 공개(각 요소의 data-open).
+  // 즉석 복권은 12월 4일(금) 17:30(한국 시간)부터 공개(data-open). 사진 콘테스트는 항상 공개.
   // 진행자는 주소 끝에 #gyul827 을 붙여 열면 미리 볼 수 있음.
   var KEY='jeju-ws-preview';
   if(location.hash==='#gyul827'){try{localStorage.setItem(KEY,'1')}catch(e){}}
@@ -600,7 +608,7 @@ body:not(.authed) .wrap,body:not(.authed) .fx,body:not(.authed) #snow{display:no
       if(pv||now>=Date.parse(el.dataset.open)){el.hidden=false;changed=true}else left++});
     if(changed)dispatchEvent(new Event('resize'));
     if(!left)clearInterval(t)}
-  var t=setInterval(check,30000);check();
+  var t=setInterval(check,5000);check();
 })();
 </script>
 <div id="lightbox" hidden role="dialog" aria-modal="true" aria-label="지도 크게 보기">
@@ -1037,6 +1045,26 @@ document.querySelectorAll('.maptoggle').forEach(function(b){
     $('bRank').innerHTML=rk.length?rk.map(function(x,i){var key=x.lines+':'+x.done;if(key!==prev){no=i+1;prev=key}
       return '<li class="'+(no<=3?'t'+no:'')+(x.me?' me':'')+'"><span class="no">'+no+'</span><span>'+esc(x.name)+'</span><span class="sc"><b>'+x.lines+'</b>줄 · '+x.done+'/9</span></li>'}).join('')
       :'<li class="none">아직 표시한 사람이 없습니다.</li>'}
+
+  /* ---------- 즉석 복권 시작 알림 (5분 전부터) ---------- */
+  var SC_OPEN=Date.parse(document.getElementById('scratch').dataset.open),SC_PRE=5*60e3,SC_AFTER=30*60e3;
+  function scPhase(now){return now<SC_OPEN-SC_PRE?null:now<SC_OPEN?'pre':now<SC_OPEN+SC_AFTER?'open':null}
+  function scDismissed(ph){try{return localStorage.getItem('jeju-ws-salert-'+ph)==='1'}catch(e){return false}}
+  var scNotified={};
+  function scratchAlert(){var a=$('scratchAlert'),now=Date.now(),ph=me?scPhase(now):null;
+    if(ph==='open'&&prize&&(prize.revealed||sc.isRevealed()))ph=null;
+    if(!ph||scDismissed(ph)){a.hidden=true;return}
+    if(ph==='pre'){var left=Math.max(0,SC_OPEN-now),m=Math.floor(left/60e3),s=Math.floor(left/1e3)%60;
+      $('scratchAlertB').textContent='즉석 복권 곧 시작!';$('scratchAlertT').textContent=m+':'+(s<10?'0':'')+s+' 후 열려요'}
+    else{$('scratchAlertB').textContent='즉석 복권이 열렸어요!';$('scratchAlertT').textContent='눌러서 긁기'}
+    a.hidden=false;
+    if(!scNotified[ph]){scNotified[ph]=1;
+      try{if(navigator.vibrate)navigator.vibrate(ph==='pre'?[200,100,200]:[300])}catch(e){}
+      try{if(window.Notification&&Notification.permission==='granted')new Notification(ph==='pre'?'즉석 복권 5분 후 시작':'즉석 복권이 열렸어요',{body:ph==='pre'?'17:30에 레크레이션 탭에서 긁을 수 있어요.':'지금 레크레이션 탭에서 긁어 보세요.'})}catch(e){}}}
+  setInterval(scratchAlert,1000);
+  $('scratchAlertX').addEventListener('click',function(){var ph=scPhase(Date.now());if(ph)try{localStorage.setItem('jeju-ws-salert-'+ph,'1')}catch(e){}$('scratchAlert').hidden=true});
+  $('scratchAlertLink').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();setTab('rec');
+    setTimeout(function(){var el=$('scratch');(el.hidden?$('lucky'):el).scrollIntoView({block:'start'})},60)});
 
   if(!configured)$('lgMsg').textContent='데이터베이스 설정이 아직 안 되어 있습니다. (index.html의 CFG 값을 채워 주세요)';
   if(token&&configured)load();else showLogin($('lgMsg').textContent);
